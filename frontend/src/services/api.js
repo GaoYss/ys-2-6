@@ -29,6 +29,13 @@ export const api = {
   getSchedule: () => request("/schedule"),
   getTeacherSchedule: (teacher = "") =>
     request(`/schedule/teacher-view${teacher ? `?teacher=${encodeURIComponent(teacher)}` : ""}`),
+  deleteSchedule: (sessionId) =>
+    request(`/schedule/${sessionId}`, { method: "DELETE" }),
+  updateSchedule: (sessionId, payload) =>
+    request(`/schedule/${sessionId}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
   generateSchedule: (payload) =>
     request("/schedule/generate", {
       method: "POST",

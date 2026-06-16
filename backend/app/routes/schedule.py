@@ -1,7 +1,12 @@
 from flask import Blueprint, jsonify, request
 
 from app.data.store import store
-from app.services.scheduler import enrich_session, generate_schedule
+from app.services.scheduler import (
+    TIME_SLOTS,
+    enrich_session,
+    generate_schedule,
+    _teacher_slot_occupied,
+)
 
 
 schedule_bp = Blueprint("schedule", __name__)
@@ -23,7 +28,9 @@ def teacher_view():
         key = (s.get("teacher"), s.get("date"), s.get("time"))
         if key in seen:
             conflict_keys.add(key)
-            conflict_keys.add((seen[key].get("teacher"), seen[key].get("date"), seen[key].get("time")))
+            conflict_keys.add(
+                (seen[key].get("teacher"), seen[key].get("date"), seen[key].get("time"))
+            )
         else:
             seen[key] = s
 
@@ -46,6 +53,59 @@ def teacher_view():
         by_teacher[t].sort(key=lambda x: (x.get("date", ""), x.get("time", "")))
 
     return jsonify({"teachers": teachers, "schedule_by_teacher": by_teacher})
+
+
+@schedule_bp.get("/<int:session_id>")
+def get_session(session_id):
+    session = next((s for s in store.schedule if s["id"] == session_id), None)
+    if not session:
+        return jsonify({"error": "课表条目不存在"}), 404
+    return jsonify(enrich_session(session))
+
+
+@schedule_bp.delete("/<int:session_id>")
+def delete_session(session_id):
+    for idx, s in enumerate(store.schedule):
+        if s["id"] == session_id:
+            store.schedule.pop(idx)
+            return jsonify({"success": True, "deleted_id": session_id})
+    return jsonify({"error": "课表条目不存在"}), 404
+
+
+@schedule_bp.put("/<int:session_id>")
+def update_session(session_id):
+    session = next((s for s in store.schedule if s["id"] == session_id), None)
+    if not session:
+        return jsonify({"error": "课表条目不存在"}), 404
+
+    payload = request.get_json() or {}
+
+    new_date = payload.get("date", session["date"])
+    new_time = payload.get("time", session["time"])
+    new_teacher = payload.get("teacher", session["teacher"])
+    new_room = payload.get("room", session["room"])
+    new_course_id = payload.get("course_id", session["course_id"])
+
+    if new_time not in TIME_SLOTS:
+        return jsonify({"error": "时段不合法"}), 400
+
+    conflicting = any(
+        s["teacher"] == new_teacher
+        and s["date"] == new_date
+        and s["time"] == new_time
+        and s["id"] != session_id
+        for s in store.schedule
+    )
+
+    session["date"] = new_date
+    session["time"] = new_time
+    session["teacher"] = new_teacher
+    session["room"] = new_room
+    session["course_id"] = int(new_course_id)
+
+    result = enrich_session(session)
+    result["conflict"] = conflicting
+    return jsonify(result)
 
 
 @schedule_bp.post("/generate")

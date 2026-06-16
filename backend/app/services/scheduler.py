@@ -13,6 +13,16 @@ def _teacher_slot_occupied(teacher, slot_date, slot_time):
     )
 
 
+def _find_available_slot(teacher, slot_date, start_index):
+    total_slots = len(TIME_SLOTS)
+    for offset in range(total_slots):
+        idx = (start_index + offset) % total_slots
+        slot_time = TIME_SLOTS[idx]
+        if not _teacher_slot_occupied(teacher, slot_date, slot_time):
+            return idx
+    return None
+
+
 def generate_schedule(class_id=None, days=10):
     classes = store.classes
     if class_id:
@@ -28,17 +38,20 @@ def generate_schedule(class_id=None, days=10):
     while len(generated) < days:
         if cursor.weekday() < 5:
             for training_class in classes:
-                course = store.courses[course_index % len(store.courses)]
-                slot_time = TIME_SLOTS[course_index % len(TIME_SLOTS)]
-                if _teacher_slot_occupied(training_class["teacher"], cursor.isoformat(), slot_time):
-                    course_index += 1
+                slot_idx = _find_available_slot(
+                    training_class["teacher"],
+                    cursor.isoformat(),
+                    course_index % len(TIME_SLOTS),
+                )
+                if slot_idx is None:
                     continue
+                course = store.courses[course_index % len(store.courses)]
                 session = {
                     "id": store.next_id("schedule"),
                     "class_id": training_class["id"],
                     "course_id": course["id"],
                     "date": cursor.isoformat(),
-                    "time": slot_time,
+                    "time": TIME_SLOTS[slot_idx],
                     "room": training_class["room"],
                     "teacher": training_class["teacher"],
                 }

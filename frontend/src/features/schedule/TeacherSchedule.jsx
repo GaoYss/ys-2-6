@@ -1,12 +1,17 @@
-import { AlertTriangle, User } from "lucide-react";
+import { AlertTriangle, Trash2, Edit3, X, Check, User } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { api } from "../../services/api";
 import { SectionHeader } from "../../components/SectionHeader";
+
+const TIME_SLOTS = ["09:00-11:00", "14:00-16:00", "19:00-21:00"];
 
 export function TeacherSchedule() {
   const [teacherView, setTeacherView] = useState({ teachers: [], schedule_by_teacher: {} });
   const [selectedTeacher, setSelectedTeacher] = useState("");
   const [loading, setLoading] = useState(true);
+  const [editingId, setEditingId] = useState(null);
+  const [editForm, setEditForm] = useState({ date: "", time: "", room: "", teacher: "" });
+  const [saving, setSaving] = useState(false);
 
   async function loadView(teacher = "") {
     setLoading(true);
@@ -17,10 +22,6 @@ export function TeacherSchedule() {
       setLoading(false);
     }
   }
-
-  useEffect(() => {
-    loadView();
-  }, []);
 
   useEffect(() => {
     loadView(selectedTeacher);
@@ -47,6 +48,43 @@ export function TeacherSchedule() {
     });
     return map;
   };
+
+  function startEdit(session) {
+    setEditingId(session.id);
+    setEditForm({
+      date: session.date,
+      time: session.time,
+      room: session.room,
+      teacher: session.teacher,
+    });
+  }
+
+  function cancelEdit() {
+    setEditingId(null);
+  }
+
+  async function handleDelete(sessionId) {
+    if (!confirm("确定要删除这条课表吗？")) return;
+    try {
+      await api.deleteSchedule(sessionId);
+      await loadView(selectedTeacher);
+    } catch (err) {
+      alert("删除失败");
+    }
+  }
+
+  async function handleSave(sessionId) {
+    setSaving(true);
+    try {
+      await api.updateSchedule(sessionId, editForm);
+      setEditingId(null);
+      await loadView(selectedTeacher);
+    } catch (err) {
+      alert("保存失败");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   return (
     <section className="module">
@@ -100,17 +138,94 @@ export function TeacherSchedule() {
                           className={`teacher-session-card${s.conflict ? " has-conflict" : ""}`}
                           key={s.id}
                         >
-                          <div className="session-time">{s.time}</div>
-                          <div className="session-body">
-                            <strong>{s.course_title}</strong>
-                            <span>{s.class_name}</span>
-                            <span>{s.room}</span>
-                          </div>
-                          {s.conflict && (
-                            <div className="conflict-badge">
-                              <AlertTriangle size={14} />
-                              时段冲突
+                          {editingId === s.id ? (
+                            <div className="session-edit-form">
+                              <div className="edit-row">
+                                <label>
+                                  日期
+                                  <input
+                                    type="date"
+                                    value={editForm.date}
+                                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                                  />
+                                </label>
+                              </div>
+                              <div className="edit-row">
+                                <label>
+                                  时段
+                                  <select
+                                    value={editForm.time}
+                                    onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                                  >
+                                    {TIME_SLOTS.map((t) => (
+                                      <option key={t} value={t}>{t}</option>
+                                    ))}
+                                  </select>
+                                </label>
+                              </div>
+                              <div className="edit-row">
+                                <label>
+                                  教室
+                                  <input
+                                    type="text"
+                                    value={editForm.room}
+                                    onChange={(e) => setEditForm({ ...editForm, room: e.target.value })}
+                                  />
+                                </label>
+                              </div>
+                              <div className="edit-actions">
+                                <button
+                                  className="primary-action"
+                                  onClick={() => handleSave(s.id)}
+                                  disabled={saving}
+                                  type="button"
+                                >
+                                  <Check size={16} />
+                                  保存
+                                </button>
+                                <button
+                                  className="secondary-action"
+                                  onClick={cancelEdit}
+                                  type="button"
+                                >
+                                  <X size={16} />
+                                  取消
+                                </button>
+                              </div>
                             </div>
+                          ) : (
+                            <>
+                              <div className="session-time">{s.time}</div>
+                              <div className="session-body">
+                                <strong>{s.course_title}</strong>
+                                <span>{s.class_name}</span>
+                                <span>{s.room}</span>
+                              </div>
+                              {s.conflict && (
+                                <div className="conflict-badge">
+                                  <AlertTriangle size={14} />
+                                  时段冲突
+                                </div>
+                              )}
+                              <div className="session-actions">
+                                <button
+                                  className="icon-btn"
+                                  onClick={() => startEdit(s)}
+                                  type="button"
+                                  title="调整"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+                                <button
+                                  className="icon-btn danger"
+                                  onClick={() => handleDelete(s.id)}
+                                  type="button"
+                                  title="删除"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </>
                           )}
                         </div>
                       ))}
