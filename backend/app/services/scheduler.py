@@ -6,6 +6,13 @@ from app.data.store import store
 TIME_SLOTS = ["09:00-11:00", "14:00-16:00", "19:00-21:00"]
 
 
+def _teacher_slot_occupied(teacher, slot_date, slot_time):
+    return any(
+        s["teacher"] == teacher and s["date"] == slot_date and s["time"] == slot_time
+        for s in store.schedule
+    )
+
+
 def generate_schedule(class_id=None, days=10):
     classes = store.classes
     if class_id:
@@ -22,12 +29,16 @@ def generate_schedule(class_id=None, days=10):
         if cursor.weekday() < 5:
             for training_class in classes:
                 course = store.courses[course_index % len(store.courses)]
+                slot_time = TIME_SLOTS[course_index % len(TIME_SLOTS)]
+                if _teacher_slot_occupied(training_class["teacher"], cursor.isoformat(), slot_time):
+                    course_index += 1
+                    continue
                 session = {
                     "id": store.next_id("schedule"),
                     "class_id": training_class["id"],
                     "course_id": course["id"],
                     "date": cursor.isoformat(),
-                    "time": TIME_SLOTS[course_index % len(TIME_SLOTS)],
+                    "time": slot_time,
                     "room": training_class["room"],
                     "teacher": training_class["teacher"],
                 }

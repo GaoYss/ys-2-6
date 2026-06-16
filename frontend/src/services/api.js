@@ -27,6 +27,8 @@ export const api = {
     }),
   getCourses: () => request("/courses"),
   getSchedule: () => request("/schedule"),
+  getTeacherSchedule: (teacher = "") =>
+    request(`/schedule/teacher-view${teacher ? `?teacher=${encodeURIComponent(teacher)}` : ""}`),
   generateSchedule: (payload) =>
     request("/schedule/generate", {
       method: "POST",

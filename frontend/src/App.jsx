@@ -1,14 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ClipboardCheck, GraduationCap, Users } from "lucide-react";
+import { CalendarDays, ClipboardCheck, GraduationCap, Users, UserCheck } from "lucide-react";
 import { api } from "./services/api";
 import { ClassManager } from "./features/classes/ClassManager";
 import { ScheduleBoard } from "./features/schedule/ScheduleBoard";
+import { TeacherSchedule } from "./features/schedule/TeacherSchedule";
 import { AttendancePanel } from "./features/attendance/AttendancePanel";
 import { HourStats } from "./features/stats/HourStats";
 
 const tabs = [
   { id: "classes", label: "班级管理", icon: Users },
   { id: "schedule", label: "课程表", icon: CalendarDays },
+  { id: "teacher-schedule", label: "教师课表", icon: UserCheck },
   { id: "attendance", label: "学员考勤", icon: ClipboardCheck },
   { id: "stats", label: "课时统计", icon: GraduationCap },
 ];
@@ -140,6 +142,7 @@ export default function App() {
                 onGenerate={handleGenerateSchedule}
               />
             )}
+            {activeTab === "teacher-schedule" && <TeacherSchedule />}
             {activeTab === "attendance" && (
               <AttendancePanel
                 schedule={schedule}

@@ -335,3 +335,108 @@ td small {
     flex-direction: column;
   }
 }
+
+.teacher-toolbar {
+  align-items: end;
+  grid-template-columns: minmax(220px, 1fr) auto;
+}
+
+.conflict-summary {
+  align-items: center;
+  background: #ffe9e7;
+  border: 1px solid #ffb8ae;
+  border-radius: 8px;
+  color: #b42318;
+  display: inline-flex;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.teacher-title {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.session-count {
+  background: #eef3f5;
+  border-radius: 999px;
+  color: #415158;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+}
+
+.teacher-schedule-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.teacher-day-block {
+  border: 1px solid #d9e3e5;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.teacher-day-header {
+  background: #12333a;
+  color: #f5fbfb;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px 14px;
+}
+
+.teacher-day-sessions {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+}
+
+.teacher-session-card {
+  background: #f9fbfb;
+  border: 1px solid #e4ecee;
+  border-left: 4px solid #0f766e;
+  border-radius: 6px;
+  display: grid;
+  gap: 6px;
+  padding: 10px 12px;
+  position: relative;
+}
+
+.teacher-session-card.has-conflict {
+  border-left-color: #b42318;
+  background: #fff5f4;
+  border-color: #ffb8ae;
+}
+
+.teacher-session-card .session-time {
+  color: #52646b;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.teacher-session-card .session-body {
+  display: grid;
+  gap: 2px;
+}
+
+.teacher-session-card .session-body span {
+  color: #52646b;
+  font-size: 12px;
+}
+
+.conflict-badge {
+  align-items: center;
+  background: #ffe9e7;
+  border-radius: 999px;
+  color: #b42318;
+  display: inline-flex;
+  font-size: 11px;
+  font-weight: 700;
+  gap: 4px;
+  padding: 3px 8px;
+  width: fit-content;
+}
