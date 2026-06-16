@@ -10,7 +10,16 @@ async function request(path, options = {}) {
   });
 
   if (!response.ok) {
-    throw new Error(`API request failed: ${response.status}`);
+    let errorData;
+    try {
+      errorData = await response.json();
+    } catch {
+      errorData = { error: `请求失败 (${response.status})` };
+    }
+    const err = new Error(errorData.error || `API request failed: ${response.status}`);
+    err.error = errorData.error;
+    err.status = response.status;
+    throw err;
   }
 
   return response.json();

@@ -97,15 +97,19 @@ def update_session(session_id):
         for s in store.schedule
     )
 
+    if conflicting:
+        return (
+            jsonify({"error": "该时段已被占用，请选择其他时段"}),
+            409,
+        )
+
     session["date"] = new_date
     session["time"] = new_time
     session["teacher"] = new_teacher
     session["room"] = new_room
     session["course_id"] = int(new_course_id)
 
-    result = enrich_session(session)
-    result["conflict"] = conflicting
-    return jsonify(result)
+    return jsonify(enrich_session(session))
 
 
 @schedule_bp.post("/generate")

@@ -1,43 +1,31 @@
 import { AlertTriangle, Trash2, Edit3, X, Check, User } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { api } from "../../services/api";
 import { SectionHeader } from "../../components/SectionHeader";
 
 const TIME_SLOTS = ["09:00-11:00", "14:00-16:00", "19:00-21:00"];
 
-export function TeacherSchedule() {
-  const [teacherView, setTeacherView] = useState({ teachers: [], schedule_by_teacher: {} });
+export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
   const [selectedTeacher, setSelectedTeacher] = useState("");
-  const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ date: "", time: "", room: "", teacher: "" });
   const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  async function loadView(teacher = "") {
-    setLoading(true);
-    try {
-      const data = await api.getTeacherSchedule(teacher);
-      setTeacherView(data);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    loadView(selectedTeacher);
-  }, [selectedTeacher]);
+  const teachers = teacherSchedule?.teachers || [];
+  const scheduleByTeacher = teacherSchedule?.schedule_by_teacher || {};
 
   const conflictCount = useMemo(() => {
     let count = 0;
-    for (const sessions of Object.values(teacherView.schedule_by_teacher)) {
+    for (const sessions of Object.values(scheduleByTeacher)) {
       count += sessions.filter((s) => s.conflict).length;
     }
     return count;
-  }, [teacherView]);
+  }, [scheduleByTeacher]);
 
   const displayedTeachers = selectedTeacher
     ? [selectedTeacher]
-    : teacherView.teachers;
+    : teachers;
 
   const groupedByDate = (sessions) => {
     const map = new Map();
@@ -51,6 +39,7 @@ export function TeacherSchedule() {
 
   function startEdit(session) {
     setEditingId(session.id);
+    setErrorMsg("");
     setEditForm({
       date: session.date,
       time: session.time,
@@ -61,13 +50,14 @@ export function TeacherSchedule() {
 
   function cancelEdit() {
     setEditingId(null);
+    setErrorMsg("");
   }
 
   async function handleDelete(sessionId) {
     if (!confirm("确定要删除这条课表吗？")) return;
     try {
       await api.deleteSchedule(sessionId);
-      await loadView(selectedTeacher);
+      await onRefresh();
     } catch (err) {
       alert("删除失败");
     }
@@ -75,12 +65,14 @@ export function TeacherSchedule() {
 
   async function handleSave(sessionId) {
     setSaving(true);
+    setErrorMsg("");
     try {
       await api.updateSchedule(sessionId, editForm);
       setEditingId(null);
-      await loadView(selectedTeacher);
+      await onRefresh();
     } catch (err) {
-      alert("保存失败");
+      const msg = err?.error || "保存失败";
+      setErrorMsg(msg);
     } finally {
       setSaving(false);
     }
@@ -93,7 +85,7 @@ export function TeacherSchedule() {
           选择教师
           <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)}>
             <option value="">全部教师</option>
-            {teacherView.teachers.map((t) => (
+            {teachers.map((t) => (
               <option key={t} value={t}>
                 {t}
               </option>
@@ -114,7 +106,7 @@ export function TeacherSchedule() {
         <div className="notice">暂无教师排课数据</div>
       ) : (
         displayedTeachers.map((teacher) => {
-          const sessions = teacherView.schedule_by_teacher[teacher] || [];
+          const sessions = scheduleByTeacher[teacher] || [];
           const byDate = groupedByDate(sessions);
           return (
             <div className="table-panel" key={teacher}>
@@ -173,6 +165,9 @@ export function TeacherSchedule() {
                                   />
                                 </label>
                               </div>
+                              {errorMsg && (
+                                <div className="edit-error">{errorMsg}</div>
+                              )}
                               <div className="edit-actions">
                                 <button
                                   className="primary-action"

@@ -500,3 +500,12 @@ td small {
   padding: 6px 12px;
   font-size: 12px;
 }
+
+.edit-error {
+  background: #fff5f4;
+  border: 1px solid #ffb8ae;
+  border-radius: 6px;
+  color: #b42318;
+  font-size: 12px;
+  padding: 6px 10px;
+}

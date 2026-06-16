@@ -20,6 +20,10 @@ export default function App() {
   const [classes, setClasses] = useState([]);
   const [courses, setCourses] = useState([]);
   const [schedule, setSchedule] = useState([]);
+  const [teacherSchedule, setTeacherSchedule] = useState({
+    teachers: [],
+    schedule_by_teacher: {},
+  });
   const [attendance, setAttendance] = useState([]);
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,17 +41,19 @@ export default function App() {
 
   async function refreshAll() {
     setError("");
-    const [classData, courseData, scheduleData, attendanceData, statsData] =
+    const [classData, courseData, scheduleData, teacherData, attendanceData, statsData] =
       await Promise.all([
         api.getClasses(),
         api.getCourses(),
         api.getSchedule(),
+        api.getTeacherSchedule(),
         api.getAttendance(),
         api.getHourStats(),
       ]);
     setClasses(classData);
     setCourses(courseData);
     setSchedule(scheduleData);
+    setTeacherSchedule(teacherData);
     setAttendance(attendanceData);
     setStats(statsData);
   }
@@ -142,7 +148,13 @@ export default function App() {
                 onGenerate={handleGenerateSchedule}
               />
             )}
-            {activeTab === "teacher-schedule" && <TeacherSchedule />}
+            {activeTab === "teacher-schedule" && (
+              <TeacherSchedule
+                teacherSchedule={teacherSchedule}
+                onRefresh={refreshAll}
+                loading={loading}
+              />
+            )}
             {activeTab === "attendance" && (
               <AttendancePanel
                 schedule={schedule}
