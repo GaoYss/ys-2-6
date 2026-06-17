@@ -60,7 +60,6 @@ export function TeacherSchedule({
 
   function handleFieldChange(field, value) {
     setEditForm((prev) => ({ ...prev, [field]: value }));
-    if (errorMsg) setErrorMsg("");
   }
 
   async function handleDelete(sessionId) {

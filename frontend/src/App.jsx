@@ -47,7 +47,7 @@ export default function App() {
         api.getClasses(),
         api.getCourses(),
         api.getSchedule(),
-        api.getTeacherSchedule(),
+        api.getTeacherSchedule(selectedTeacher),
         api.getAttendance(),
         api.getHourStats(),
       ]);
@@ -59,11 +59,26 @@ export default function App() {
     setStats(statsData);
   }
 
+  async function refreshTeacherView(teacher) {
+    try {
+      const data = await api.getTeacherSchedule(teacher);
+      setTeacherSchedule(data);
+    } catch (err) {
+      console.error("刷新教师课表失败", err);
+    }
+  }
+
   useEffect(() => {
     refreshAll()
       .catch(() => setError("后端服务暂不可用，请确认 Flask API 已启动。"))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      refreshTeacherView(selectedTeacher);
+    }
+  }, [selectedTeacher]);
 
   async function handleCreateClass(payload) {
     await api.createClass(payload);
