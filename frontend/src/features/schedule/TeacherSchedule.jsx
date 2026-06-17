@@ -5,8 +5,13 @@ import { SectionHeader } from "../../components/SectionHeader";
 
 const TIME_SLOTS = ["09:00-11:00", "14:00-16:00", "19:00-21:00"];
 
-export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
-  const [selectedTeacher, setSelectedTeacher] = useState("");
+export function TeacherSchedule({
+  teacherSchedule,
+  onRefresh,
+  loading,
+  selectedTeacher,
+  onSelectedTeacherChange,
+}) {
   const [editingId, setEditingId] = useState(null);
   const [editForm, setEditForm] = useState({ date: "", time: "", room: "", teacher: "" });
   const [saving, setSaving] = useState(false);
@@ -53,6 +58,11 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
     setErrorMsg("");
   }
 
+  function handleFieldChange(field, value) {
+    setEditForm((prev) => ({ ...prev, [field]: value }));
+    if (errorMsg) setErrorMsg("");
+  }
+
   async function handleDelete(sessionId) {
     if (!confirm("确定要删除这条课表吗？")) return;
     try {
@@ -65,14 +75,13 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
 
   async function handleSave(sessionId) {
     setSaving(true);
-    setErrorMsg("");
     try {
       await api.updateSchedule(sessionId, editForm);
       setEditingId(null);
+      setErrorMsg("");
       await onRefresh();
     } catch (err) {
-      const msg = err?.error || "保存失败";
-      setErrorMsg(msg);
+      setErrorMsg(err?.error || "保存失败");
     } finally {
       setSaving(false);
     }
@@ -83,7 +92,10 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
       <div className="toolbar-panel teacher-toolbar">
         <label>
           选择教师
-          <select value={selectedTeacher} onChange={(e) => setSelectedTeacher(e.target.value)}>
+          <select
+            value={selectedTeacher}
+            onChange={(e) => onSelectedTeacherChange(e.target.value)}
+          >
             <option value="">全部教师</option>
             {teachers.map((t) => (
               <option key={t} value={t}>
@@ -138,7 +150,7 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
                                   <input
                                     type="date"
                                     value={editForm.date}
-                                    onChange={(e) => setEditForm({ ...editForm, date: e.target.value })}
+                                    onChange={(e) => handleFieldChange("date", e.target.value)}
                                   />
                                 </label>
                               </div>
@@ -147,7 +159,7 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
                                   时段
                                   <select
                                     value={editForm.time}
-                                    onChange={(e) => setEditForm({ ...editForm, time: e.target.value })}
+                                    onChange={(e) => handleFieldChange("time", e.target.value)}
                                   >
                                     {TIME_SLOTS.map((t) => (
                                       <option key={t} value={t}>{t}</option>
@@ -161,7 +173,7 @@ export function TeacherSchedule({ teacherSchedule, onRefresh, loading }) {
                                   <input
                                     type="text"
                                     value={editForm.room}
-                                    onChange={(e) => setEditForm({ ...editForm, room: e.target.value })}
+                                    onChange={(e) => handleFieldChange("room", e.target.value)}
                                   />
                                 </label>
                               </div>

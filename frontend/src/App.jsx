@@ -28,6 +28,7 @@ export default function App() {
   const [stats, setStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [selectedTeacher, setSelectedTeacher] = useState("");
 
   const studentMap = useMemo(() => {
     const map = new Map();
@@ -153,6 +154,8 @@ export default function App() {
                 teacherSchedule={teacherSchedule}
                 onRefresh={refreshAll}
                 loading={loading}
+                selectedTeacher={selectedTeacher}
+                onSelectedTeacherChange={setSelectedTeacher}
               />
             )}
             {activeTab === "attendance" && (
